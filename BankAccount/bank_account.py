@@ -36,7 +36,7 @@ class Interface:
     def __configure_window_log_in(self) -> None:
 
         # Helper function triggering on confirm_button press - saves user data entered if they match system conditions:
-        def submit_login_password(event: tk.Event) -> None:
+        def submit_login_password() -> None:
             self.__user.set_login(entry_login.get())
             self.__user.set_password(entry_password.get())
 
@@ -52,6 +52,7 @@ class Interface:
 
         def on_hover_leave_close(event: tk.Event):
             close_button.config(bg="white")
+
         # Setting pad on y axis:
         pady = 5
 
@@ -75,8 +76,8 @@ class Interface:
 
         # Packing created widgets into window:
         label1.pack(pady=pady)
-        label2.pack(pady=pady)
         entry_login.pack(pady=pady)
+        label2.pack(pady=pady)
         entry_password.pack(pady=pady)
         confirm_button.pack(pady=pady)
         close_button.pack(pady=pady)
