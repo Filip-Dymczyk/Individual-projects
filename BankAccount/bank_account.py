@@ -62,7 +62,7 @@ class Interface:
 
         # Entry fields to enter login and password:
         entry_login = tk.Entry(self.__window, width=30)
-        entry_password = tk.Entry(self.__window, width=30)
+        entry_password = tk.Entry(self.__window, show="*", width=30)
 
         # Buttons for: data confirmation and closing the window:
         confirm_button = tk.Button(self.__window, text="Confirm", command=submit_login_password)
