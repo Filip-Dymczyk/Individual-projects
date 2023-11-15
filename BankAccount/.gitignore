@@ -131,3 +131,5 @@ dmypy.json
 /Pipfile
 /*.code-workspace
 /.idea
+
+**/__pycache__/
