@@ -40,15 +40,15 @@ class Interface:
     # Functions handling buttons hovering:
     def __on_hover(self, event: tk.Event) -> None:
         widget = event.widget
-        # Registration button:
-        if widget.button_id == 1:
-            pass
         # Confirm button:
-        elif widget.button_id == 2:
+        if widget.button_id == 1:
             widget.config(bg="green")
-        # Close button
-        elif widget.button_id == 3:
+        # Close button:
+        elif widget.button_id == 2:
             widget.config(bg="red")
+        # Registration button
+        elif widget.button_id == 3:
+            pass
 
     def __on_hover_leave(self, event: tk.Event) -> None:
         widget = event.widget
@@ -117,6 +117,9 @@ class Interface:
         label1.label_id = 2
         entry_login.entry_id = 1
         entry_password.entry_id = 2
+        confirm_button.button_id = 1
+        close_button.button_id = 2
+        registration_button.button_id = 3
 
         # Packing created widgets into window:
         label1.pack(pady=pady)
@@ -130,7 +133,7 @@ class Interface:
 
         # Initializing registration window:
         self.__window = tk.Tk()
-        self.__window.title("Register:")
+        self.__window.title("Registration")
 
         # Setting pad on x- and y-axis:
         padx = 5
@@ -149,8 +152,19 @@ class Interface:
         entry_email = tk.Entry(self.__window, width=30)
 
         # # Binding entry fields to trigger checking data entered in the fields by Enter:
-        # entry_login.bind("<Return>", on_enter_pressed_login)
-        # entry_password.bind("<Return>", on_enter_pressed_password)
+        entry_login.bind("<Return>", on_enter_pressed_login)
+        entry_password.bind("<Return>", on_enter_pressed_password)
+
+        # Packing:
+        label1.pack(pady=pady)
+        label2.pack(pady=pady)
+        label3.pack(pady=pady)
+        label4.pack(pady=pady)
+        entry_login.pack(pady=pady)
+        entry_password.pack(pady=pady)
+        entry_re_password.pack(pady=pady)
+        entry_email.pack(pady=pady)
+
 
 
     def get_user_login(self) -> str:
