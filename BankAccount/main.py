@@ -1,4 +1,4 @@
-from bank_account import Interface
+from interface import Interface
 
 interface = Interface()
 interface.activate()
