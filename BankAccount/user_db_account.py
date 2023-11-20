@@ -24,11 +24,13 @@ class User:
 # Class representing a database, probably file reader and writer at first; in later versions maybe a regular database:
 class DataBase:
     def __init__(self) -> None:
+
         # Keeping track of information that may be used to speed-up later processes of the application like:
         # number of line in which we have data related to the user that is currently logged and his account balance.
-        self.line_nr = None
-        self.account_balance = None
+        self.line_nr: Optional[int] = None
+        self.__account_balance: Optional[float] = None
 
+        # File opening:
         self.__file = open("C:\\Users\\User\\Desktop\\Python_projects\\python_projects\\BankAccount\\data.txt", "r+")
 
     # Destructor - closing the file on app termination:
@@ -54,7 +56,7 @@ class DataBase:
                     password_from_file = line_split[1]
 
                     # Third element is balance which we save:
-                    self.account_balance = float(line_split[2])
+                    self.__account_balance = float(line_split[2])
                     # We also get the line nr in which we have useful information:
                     self.line_nr = i
 
@@ -70,11 +72,19 @@ class DataBase:
         self.line_nr = len(self.__file.readlines()) - 1
 
         # Balance = 0:
-        self.account_balance = 0
+        self.__account_balance = 0
 
     # Getting balance related to particular User:
     def get_balance(self) -> float:
-        return self.account_balance
+        return self.__account_balance
+
+    # Setting balance:
+    def set_balance(self, balance: float) -> None:
+        self.__account_balance = balance
+
+    # Updating balance:
+    def update_balance(self, login: str, password: str) -> None:
+        pass
 
 
 # Class representing account details:

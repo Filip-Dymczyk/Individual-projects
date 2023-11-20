@@ -1,6 +1,7 @@
 from typing import Optional
 from user_db_account import User, DataBase, Account
 import tkinter as tk
+from tkinter import ttk
 
 
 # Interface handling all the windows appearing throughout the program:
@@ -10,6 +11,7 @@ class Interface:
         self.__log_in_window: Optional[tk.Tk] = None
         self.__register_window: Optional[tk.Tk] = None
         self.__account_window: Optional[tk.Tk] = None
+        self.__info_window: Optional[tk.Tk] = None
 
         # Creating DataBase object to handle flow of information:
         self.__data_base: DataBase = DataBase()
@@ -28,10 +30,10 @@ class Interface:
         if button_id in [1, 2, 4]:
             widget.config(bg="green")
         # Return button from registration:
-        elif button_id in [5]:
+        elif button_id in [5, 8]:
             widget.config(bg="yellow")
         # Close button:
-        elif button_id in [3, 6]:
+        elif button_id in [3, 6, 7]:
             widget.config(bg="red")
 
     def __on_hover_leave(self, event: tk.Event) -> None:
@@ -66,6 +68,9 @@ class Interface:
 
         # Toggling red cross in the top right corner to terminating the app:
         self.__log_in_window.protocol("WM_DELETE_WINDOW", self.__close_all_cross)
+
+        # Setting fixed window position:
+        self.__log_in_window.geometry("+850+375")
 
         # Submitting login and password via confirm - initializing User:
         def submit_login_password() -> None:
@@ -124,9 +129,9 @@ class Interface:
 
         # Packing created widgets into window:
         label1.pack()
-        entry_login.pack(pady=pady)
+        entry_login.pack(pady=pady, padx=padx)
         label2.pack()
-        entry_password.pack(pady=pady)
+        entry_password.pack(pady=pady, padx=padx)
         confirm_button.pack(pady=3 * pady)
         label3.pack(pady=pady)
         registration_button.pack()
@@ -135,8 +140,12 @@ class Interface:
     # Registration window:
     def __open_registration_window(self) -> None:
 
-        # Withdrawing log_in window from view:
-        self.__log_in_window.withdraw()
+        # Withdrawing log-in window:
+        if self.__log_in_window:
+            self.__log_in_window.withdraw()
+        # Closing info-window:
+        if self.__info_window is not None:
+            self.__info_window.destroy()
 
         # Handling enter pressed on re-password:
         def on_enter_pressed_re_password(event: tk.Event) -> None:
@@ -167,11 +176,14 @@ class Interface:
         self.__register_window = tk.Tk()
         self.__register_window.title("Registration")
 
+        # Setting fixed window position:
+        self.__register_window.geometry("+850+375")
+
         # Toggling red cross in the top right corner to terminating the app:
         self.__register_window.protocol("WM_DELETE_WINDOW", self.__close_all_cross)
 
         # Setting pad on x- and y-axis:
-        padx = 5
+        padx = 25
         pady = 5
 
         # Labels:
@@ -194,7 +206,7 @@ class Interface:
         # Confirm, close, return to log_in buttons:
         confirm_button = tk.Button(self.__register_window, text="Confirm", font="Calibri 10", command=create_an_account)
         return_button = tk.Button(self.__register_window, text="Return to log-in", font="Calibri 10",
-                                  command=self.__return_to_log_in)
+                                  command=lambda return_button_id=1: self.__return_to_log_in(return_button_id))
 
         # On hover:
         confirm_button.bind("<Enter>", lambda event, button_id=4: self.__on_hover(event, button_id))
@@ -205,11 +217,11 @@ class Interface:
 
         # Packing:
         label1.pack()
-        entry_login.pack(pady=2 * pady)
+        entry_login.pack(pady=2 * pady, padx=padx)
         label2.pack()
-        entry_password.pack(pady=2 * pady)
+        entry_password.pack(pady=2 * pady, padx=padx)
         label3.pack()
-        entry_re_password.pack(pady=2 * pady)
+        entry_re_password.pack(pady=2 * pady, padx=padx)
         # label4.pack()
         # entry_email.pack(pady=2*pady)
         confirm_button.pack(pady=3 * pady)
@@ -217,7 +229,29 @@ class Interface:
 
     # Window popping after wrong login data have been confirmed:
     def __incorrect_login_window(self) -> None:
-        pass
+        # Withdrawing log-in window:
+        if self.__log_in_window is not None:
+            self.__log_in_window.withdraw()
+
+        self.__info_window = tk.Tk()
+        self.__info_window.title("Incorrect login or password!")
+        self.__info_window.protocol("WM_DELETE_WINDOW", self.__close_all_cross)
+        self.__info_window.geometry("350x80+850+400")
+
+        #label1 = tk.Label(self.__info_window, text="Enter correct login or password!", font="Calibri 12 bold")
+
+        close_button = tk.Button(self.__info_window, text="Try to log-in again.", font="Calibri 10", command=lambda return_button_id=2: self.__return_to_log_in(return_button_id))
+        register_button = tk.Button(self.__info_window, text="Don't have an account yet? Sign in!", font="Calibri 10 underline", command=self.__open_registration_window)
+
+        close_button.bind("<Enter>", lambda event, close_button_id=7: self.__on_hover(event, close_button_id))
+        close_button.bind("<Leave>", self.__on_hover_leave)
+        register_button.bind("<Enter>", lambda event, registration_button_id=8: self.__on_hover(event, registration_button_id))
+        register_button.bind("<Leave>", self.__on_hover_leave)
+
+        #label1.pack(padx=5, pady=5)
+        register_button.pack(padx=5, pady=10, fill="both")
+        close_button.pack(padx=5, pady=5, fill="both")
+
 
     # Little window informing about positive account creation:
     def __transition_window_account_created(self) -> None:
@@ -231,18 +265,25 @@ class Interface:
         return self.__user.get_login()
 
     # Returning to login window - withdrawing registration and showing login:
-    def __return_to_log_in(self) -> None:
-        if self.__register_window.winfo_exists():
-            self.__register_window.withdraw()
-        if self.__log_in_window.winfo_exists():
-            self.__log_in_window.iconify()
+    def __return_to_log_in(self, return_button_id: int) -> None:
+        # Return to log-in from registration:
+        if return_button_id == 1:
+            self.__register_window.destroy()
+            self.__register_window = None
+        # Return to log-in from info-window:
+        elif return_button_id == 2:
+            self.__info_window.destroy()
+            self.__info_window = None
+        # Re-withdrawing log-in window:
+        self.__log_in_window.deiconify()
 
     # Terminating the whole program:
     def __terminate(self, close_button_nr: int) -> None:
         # Close button from log_in:
         if close_button_nr == 1:
-            if self.__register_window:
+            if self.__register_window is not None:
                 self.__register_window.destroy()
+                self.__register_window = None
             self.__log_in_window.quit()
 
     # Closing the app with the use of a red cross:
