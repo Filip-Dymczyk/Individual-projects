@@ -1,7 +1,7 @@
 from typing import Optional
 from user_db_account import User, DataBase, Account
 import tkinter as tk
-from tkinter import ttk
+import re
 
 
 # Interface handling all the windows appearing throughout the program:
@@ -19,22 +19,30 @@ class Interface:
         # Creating associated user:
         self.__user: User = User()
 
-    # Helper checking password or login viability:
-    def __check_viability(self, l_p: str) -> bool:
-        return 4 < len(l_p) < 10 and l_p.isalnum()
+    # Helper checking login viability:
+    def __check_viability_login(self, login: str) -> bool:
+        # Beginning with letters and only then can have digits:
+        conditions_to_meet = re.compile(r'^[a-zA-Z]+\d*$')
+        return 4 < len(login) < 10 and bool(conditions_to_meet.match(login))
+
+    # Helper checking password viability:
+    def __check_viability_password(self, password: str) -> bool:
+        # At least one digit, letter, capital letter, special sign:
+        conditions_to_meet = re.compile(r'^(?=.*\d)(?=.*[a-zA-Z])(?=.*[A-Z])(?=.*[!@#$%^&*]).*$')
+        return 8 < len(password) < 16 and bool(conditions_to_meet.match(password))
 
     # Functions handling buttons hovering:
     def __on_hover(self, event: tk.Event, button_id: int) -> None:
         widget = event.widget
         # Confirm button and registration button form log-in, confirm and from registration:
         if button_id in [1, 2, 4]:
-            widget.config(bg="green")
+            widget.config(bg="#43D452")
         # Return button from registration:
         elif button_id in [5, 8]:
             widget.config(bg="yellow")
         # Close button:
         elif button_id in [3, 6, 7]:
-            widget.config(bg="red")
+            widget.config(bg="#F74E3A")
 
     def __on_hover_leave(self, event: tk.Event) -> None:
         widget = event.widget
@@ -45,19 +53,19 @@ class Interface:
         entry = event.widget
         login = entry.get()
         # Login entries:
-        if self.__check_viability(login):
-            entry.config(bg="green")
+        if self.__check_viability_login(login):
+            entry.config(bg="#43D452")
         else:
-            entry.config(bg="red")
+            entry.config(bg="#F74E3A")
 
     def __on_enter_pressed_password(self, event: tk.Event) -> None:
         entry = event.widget
         password = entry.get()
         # Password entries:
-        if self.__check_viability(password):
-            entry.config(bg="green")
+        if self.__check_viability_password(password):
+            entry.config(bg="#43D452")
         else:
-            entry.config(bg="red")
+            entry.config(bg="#F74E3A")
 
     # Log-in window configuration:
     def __configure_window_log_in(self) -> None:
@@ -70,15 +78,15 @@ class Interface:
         self.__log_in_window.protocol("WM_DELETE_WINDOW", self.__close_all_cross)
 
         # Setting fixed window position:
-        self.__log_in_window.geometry("+850+375")
+        self.__log_in_window.geometry("+900+375")
 
         # Submitting login and password via confirm - initializing User:
         def submit_login_password() -> None:
             login = entry_login.get()
             password = entry_password.get()
 
-            # If login and password are viable and they are in data_base related to each-other then the login is successful:
-            if self.__check_viability(login) and self.__check_viability(password) and \
+            # If login and password are viable and they are in database related to each-other then the login is successful:
+            if self.__check_viability_login(login) and self.__check_viability_password(password) and \
                     self.__data_base.check_login_in_file(login) and \
                     self.__data_base.check_login_password(login, password):
 
@@ -105,10 +113,6 @@ class Interface:
         # Entry fields to enter login and password:
         entry_login = tk.Entry(self.__log_in_window, width=35)
         entry_password = tk.Entry(self.__log_in_window, show="*", width=35)
-
-        # Binding entry fields to trigger checking data entered in the fields by Enter:
-        entry_login.bind("<Return>", self.__on_enter_pressed_login)
-        entry_password.bind("<Return>", self.__on_enter_pressed_password)
 
         # Buttons for: registration, data confirmation and closing the window:
         registration_button = tk.Button(self.__log_in_window, text="Click here to register",
@@ -144,10 +148,10 @@ class Interface:
         def on_enter_pressed_re_password(event: tk.Event) -> None:
             widget = event.widget
             re_password = widget.get()
-            if self.__check_viability(re_password) and re_password == entry_password.get():
-                widget.configure(bg="green")
+            if self.__check_viability_password(re_password) and re_password == entry_password.get():
+                widget.configure(bg="#43D452")
             else:
-                widget.configure(bg="red")
+                widget.configure(bg="#F74E3A")
 
         def create_an_account() -> None:
 
@@ -155,12 +159,18 @@ class Interface:
             login = entry_login.get()
             password = entry_password.get()
             re_password = entry_re_password.get()
+            # Handle situation in which somebody tries to create and account that exists - login exists:
 
-            if self.__check_viability(login) and self.__check_viability(password) and self.__check_viability(
-                    re_password):
+
+            # Check viability:
+            if self.__check_viability_login(login) and self.__check_viability_password(password) \
+                    and self.__check_viability_password(re_password):
+
                 # Check password identity:
                 if password == re_password:
+
                     # Update the DataBase - enter new client data:
+                    self.__data_base.write_data_to_file(login, password)
 
                     # Go through transition window:
                     self.__transition_window_account_created()
@@ -170,7 +180,7 @@ class Interface:
         self.__register_window.title("Registration")
 
         # Setting fixed window position:
-        self.__register_window.geometry("+850+375")
+        self.__register_window.geometry("+900+375")
 
         # Toggling red cross in the top right corner to terminating the app:
         self.__register_window.protocol("WM_DELETE_WINDOW", self.__close_all_cross)
@@ -183,13 +193,14 @@ class Interface:
         label1 = tk.Label(self.__register_window, text="Login", font="Calibri 12")
         label2 = tk.Label(self.__register_window, text="Password", font="Calibri 12")
         label3 = tk.Label(self.__register_window, text="Enter your password again", font="Calibri 12")
-        # label4 = tk.Label(self.__register_window, text="Enter your email", font="Calibri 12")
+        label4 = tk.Label(self.__register_window, text="On enter press:", font="Calibri 10 bold")
+        label5 = tk.Label(self.__register_window, text="- this color means that your login/password is correct!", font="Calibri 10", bg="#43D452")
+        label6 = tk.Label(self.__register_window, text="- this color means that your login/password is incorrect!", font="Calibri 10", bg="#F74E3A")
 
         # Entry fields to enter login and password and email:
         entry_login = tk.Entry(self.__register_window, width=30)
         entry_password = tk.Entry(self.__register_window, show="*", width=30)
         entry_re_password = tk.Entry(self.__register_window, show="*", width=30)
-        # entry_email = tk.Entry(self.__register_window, width=30)
 
         # Binding fields on enter trigger:
         entry_login.bind("<Return>", self.__on_enter_pressed_login)
@@ -215,10 +226,11 @@ class Interface:
         entry_password.pack(pady=2 * pady, padx=padx)
         label3.pack()
         entry_re_password.pack(pady=2 * pady, padx=padx)
-        # label4.pack()
-        # entry_email.pack(pady=2*pady)
-        confirm_button.pack(pady=3 * pady)
-        return_button.pack(side="bottom", pady=pady)
+        confirm_button.pack(pady=2 * pady)
+        return_button.pack(pady=pady)
+        label4.pack(pady=pady)
+        label5.pack(fill="both")
+        label6.pack(fill="both")
 
     # Window popping after wrong login data have been confirmed:
     def __incorrect_login_window(self) -> None:
@@ -226,13 +238,14 @@ class Interface:
         if self.__log_in_window:
             self.__log_in_window.withdraw()
 
+        # Setting up info window:
         self.__info_window = tk.Tk()
         self.__info_window.title("Incorrect login or password!")
         self.__info_window.protocol("WM_DELETE_WINDOW", self.__close_all_cross)
-        self.__info_window.geometry("350x80+850+400")
+        self.__info_window.geometry("350x80+850+450")
 
-        #label1 = tk.Label(self.__info_window, text="Enter correct login or password!", font="Calibri 12 bold")
 
+        # Initializing buttons:
         close_button = tk.Button(self.__info_window, text="Try to log-in again.", font="Calibri 10",
                                  command=lambda return_button_id=2: self.__return_to_log_in(return_button_id))
         register_button = tk.Button(self.__info_window, text="Don't have an account yet? Sign in!", font="Calibri 10 underline",
@@ -243,10 +256,9 @@ class Interface:
         register_button.bind("<Enter>", lambda event, registration_button_id=8: self.__on_hover(event, registration_button_id))
         register_button.bind("<Leave>", self.__on_hover_leave)
 
-        #label1.pack(padx=5, pady=5)
-        register_button.pack(padx=5, pady=10, fill="both")
+        # Packing
+        register_button.pack(padx=5, pady=5, fill="both")
         close_button.pack(padx=5, pady=5, fill="both")
-
 
     # Little window informing about positive account creation:
     def __transition_window_account_created(self) -> None:
@@ -280,7 +292,6 @@ class Interface:
         elif return_button_id == 2:
             self.__info_window.destroy()
         self.__open_registration_window()
-
 
     # Terminating the whole program:
     def __terminate(self, close_button_nr: int) -> None:
