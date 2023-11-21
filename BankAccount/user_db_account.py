@@ -30,46 +30,57 @@ class DataBase:
         self.line_nr: Optional[int] = None
         self.__account_balance: Optional[float] = None
 
-        # File opening:
-        self.__file = open("C:\\Users\\User\\Desktop\\Python_projects\\python_projects\\BankAccount\\data.txt", "r+")
-
-    # Destructor - closing the file on app termination:
-    def __del__(self) -> None:
-        self.__file.close()
+        # Getting appropriate file path:
+        file_path = __file__
+        file_path = file_path.split("\\")
+        file_path = file_path[:-1]
+        file_path = "\\".join(file_path)
+        file_path += "\\data.txt"
+        self.__file_path = file_path
 
     # Checking if login exists in the file - we don't allow same logins:
     def check_login_in_file(self, login: str) -> bool:
-        return login in self.__file.read()
+        with open(self.__file_path, 'r') as file:
+            return login in file.read()
 
     # Checking (during login) if the login entered is present and if it matches the password in the same
     # line of the file.
     # True means that login data are viable, False says otherwise.
     def check_login_password(self, login: str, password) -> bool:
+
         if self.check_login_in_file(login):
-            # We get a tab of all lines and index of every line:
-            for i, line in enumerate(self.__file.readlines()):
-                # if given login is in the line:
-                if login in line:
-                    # We split it so that there are no spaces - we get an array:
-                    line_split = line.split()
-                    # Second element is password:
-                    password_from_file = line_split[1]
 
-                    # Third element is balance which we save:
-                    self.__account_balance = float(line_split[2])
-                    # We also get the line nr in which we have useful information:
-                    self.line_nr = i
+            # Opening file to read lines in order to search for user:
+            with open(self.__file_path, 'r') as file:
+                for i, line in enumerate(file.readlines()):
 
-                    return password_from_file == password
+                    # if given login is in the line:
+                    if login in line:
+
+                        # We split it so that there are no spaces - we get an array:
+                        line_split = line.split()
+
+                        # Second element is password:
+                        password_from_file = line_split[1]
+
+                        # Third element is balance which we save:
+                        self.__account_balance = float(line_split[2])
+
+                        # We also get the line nr in which we have useful information:
+                        self.line_nr = i
+
+                        return password_from_file == password
         return False
 
     # Writing data to file after registration is finished. Remembers client's account balance.
     def write_data_to_file(self, login: str, password: str) -> None:
-        line = f"{login} {password} {0}\n"
-        self.__file.write(line)
+        with open(self.__file_path, "a+") as file:
+            # Writing appropriately formatted line to file:
+            line = f"{login} {password} {0}\n"
+            file.write(line)
 
-        # It's now the last line - newly added:
-        self.line_nr = len(self.__file.readlines()) - 1
+            # It's now the last line - newly added:
+            self.line_nr = len(file.readlines()) - 1
 
         # Balance = 0:
         self.__account_balance = 0
