@@ -112,7 +112,7 @@ class Interface:
 
         # Buttons for: registration, data confirmation and closing the window:
         registration_button = tk.Button(self.__log_in_window, text="Click here to register",
-                                        command=self.__open_registration_window, font="Calibri 10 bold")
+                                        command=lambda return_button_id=1: self.__return_to_register(return_button_id), font="Calibri 10 bold")
         confirm_button = tk.Button(self.__log_in_window, text="Confirm", command=submit_login_password,
                                    font="Calibri 10")
         leave_button = tk.Button(self.__log_in_window, text="Leave",
@@ -139,13 +139,6 @@ class Interface:
 
     # Registration window:
     def __open_registration_window(self) -> None:
-
-        # Withdrawing log-in window:
-        if self.__log_in_window:
-            self.__log_in_window.withdraw()
-        # Closing info-window:
-        if self.__info_window is not None:
-            self.__info_window.destroy()
 
         # Handling enter pressed on re-password:
         def on_enter_pressed_re_password(event: tk.Event) -> None:
@@ -230,7 +223,7 @@ class Interface:
     # Window popping after wrong login data have been confirmed:
     def __incorrect_login_window(self) -> None:
         # Withdrawing log-in window:
-        if self.__log_in_window is not None:
+        if self.__log_in_window:
             self.__log_in_window.withdraw()
 
         self.__info_window = tk.Tk()
@@ -240,8 +233,10 @@ class Interface:
 
         #label1 = tk.Label(self.__info_window, text="Enter correct login or password!", font="Calibri 12 bold")
 
-        close_button = tk.Button(self.__info_window, text="Try to log-in again.", font="Calibri 10", command=lambda return_button_id=2: self.__return_to_log_in(return_button_id))
-        register_button = tk.Button(self.__info_window, text="Don't have an account yet? Sign in!", font="Calibri 10 underline", command=self.__open_registration_window)
+        close_button = tk.Button(self.__info_window, text="Try to log-in again.", font="Calibri 10",
+                                 command=lambda return_button_id=2: self.__return_to_log_in(return_button_id))
+        register_button = tk.Button(self.__info_window, text="Don't have an account yet? Sign in!", font="Calibri 10 underline",
+                                    command=lambda return_button_id=2: self.__return_to_register(return_button_id))
 
         close_button.bind("<Enter>", lambda event, close_button_id=7: self.__on_hover(event, close_button_id))
         close_button.bind("<Leave>", self.__on_hover_leave)
@@ -264,7 +259,7 @@ class Interface:
     def get_user_login(self) -> str:
         return self.__user.get_login()
 
-    # Returning to login window - withdrawing registration and showing login:
+    # Returning to login window:
     def __return_to_log_in(self, return_button_id: int) -> None:
         # Return to log-in from registration:
         if return_button_id == 1:
@@ -276,6 +271,16 @@ class Interface:
             self.__info_window = None
         # Re-withdrawing log-in window:
         self.__log_in_window.deiconify()
+
+    def __return_to_register(self, return_button_id: int) -> None:
+        # Returning from log-in window:
+        if return_button_id == 1:
+            self.__log_in_window.withdraw()
+        # Returning from info window:
+        elif return_button_id == 2:
+            self.__info_window.destroy()
+        self.__open_registration_window()
+
 
     # Terminating the whole program:
     def __terminate(self, close_button_nr: int) -> None:
