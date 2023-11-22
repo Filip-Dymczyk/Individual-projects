@@ -1,26 +1,6 @@
 from typing import Optional
 
 
-# Class representing user data who is currently using the program: login, password and an account:
-class User:
-    def __init__(self) -> None:
-        self.__login: Optional[str] = None
-        self.__password: Optional[str] = None
-        self.account: Account = Account()
-
-    def set_login(self, login: str) -> None:
-        self.__login = login
-
-    def set_password(self, password: str) -> None:
-        self.__password = password
-
-    def get_login(self) -> str:
-        return self.__login
-
-    def get_password(self) -> str:
-        return self.__password
-
-
 # Class representing a database, probably file reader and writer at first; in later versions maybe a regular database:
 class DataBase:
     def __init__(self) -> None:
@@ -85,21 +65,20 @@ class DataBase:
         # Balance = 0:
         self.__account_balance = 0
 
-    # Getting balance related to particular User:
-    def get_balance(self) -> float:
-        return self.__account_balance
 
-    # Setting balance:
-    def set_balance(self, balance: float) -> None:
-        self.__account_balance = balance
-
-    # Updating balance:
-    def update_balance(self, login: str, password: str) -> None:
-        pass
-
-
-# Class representing account details:
+# Class representing account details and allowing for operations:
 class Account:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, balance: float = 0) -> None:
+        self.__balance = balance
 
+    def get_balance(self) -> float:
+        return self.__balance
+
+    def set_balance(self, balance: float) -> None:
+        self.__balance = balance
+
+    def withdraw(self, amount: float) -> None:
+        self.__balance -= abs(amount)
+
+    def deposit(self, amount: float) -> None:
+        self.__balance += abs(amount)

@@ -1,5 +1,5 @@
 from typing import Optional
-from user_db_account import User, DataBase, Account
+from db_account import DataBase, Account
 import tkinter as tk
 import re
 
@@ -15,12 +15,13 @@ class Interface:
         self.__notification_window: Optional[tk.Tk] = None
         self.__failed_registration_window: Optional[tk.Tk] = None
         self.__registration_successful_window: Optional[tk.Tk] = None
+        self.__transition_window: Optional[tk.Tk] = None
 
         # Creating DataBase object to handle flow of information:
         self.__data_base: DataBase = DataBase()
 
-        # Creating associated user:
-        self.__user: User = User()
+        # Creating Account object:
+        self.__account: Account = Account()
 
     # Helper checking login viability:
     def __check_viability_login(self, login: str) -> bool:
@@ -84,6 +85,21 @@ class Interface:
     # Log-in window configuration:
     def __configure_window_log_in(self) -> None:
 
+        # Submitting login and password via confirm:
+        def submit_login_password() -> None:
+            login = entry_login.get()
+            password = entry_password.get()
+
+            # If login and password are in database related to each-other then the login is successful:
+            if self.__data_base.check_login_password(login, password):
+                # Add: getting account balance for data_base and setting users Account with it:
+
+                # Move to another window - transition:
+                self.__transition_to_account_management_window()
+            else:
+                # Pop another window:
+                self.__incorrect_login()
+
         # Initializing log_in window:
         self.__login_window = tk.Tk()
         self.__login_window.title("Log in")
@@ -93,25 +109,6 @@ class Interface:
 
         # Setting fixed window position:
         self.__login_window.geometry("+900+375")
-
-        # Submitting login and password via confirm - initializing User:
-        def submit_login_password() -> None:
-            login = entry_login.get()
-            password = entry_password.get()
-
-            # If login and password are in database related to each-other then the login is successful:
-            if self.__data_base.check_login_in_file(login) and self.__data_base.check_login_password(login, password):
-
-                self.__user.set_login(login)
-                self.__user.set_password(password)
-
-                # Add: getting account balance for data_base and setting users Account with it:
-
-                # Move to another window:
-                self.__account_management_window()
-            else:
-                # Pop another window:
-                self.__incorrect_login()
 
         # Setting pad on x- and y-axis:
         padx = 5
@@ -128,7 +125,8 @@ class Interface:
 
         # Buttons for: registration, data confirmation and closing the window:
         registration_button = tk.Button(self.__login_window, text="Click here to register",
-                                        command=lambda return_button_id=1: self.__return_to_register(return_button_id), font="Calibri 10 bold")
+                                        command=lambda return_button_id=1: self.__return_to_register(return_button_id),
+                                        font="Calibri 10 bold")
         confirm_button = tk.Button(self.__login_window, text="Confirm", command=submit_login_password,
                                    font="Calibri 10")
         leave_button = tk.Button(self.__login_window, text="Leave",
@@ -201,7 +199,6 @@ class Interface:
 
                 # Check password identity:
                 if password == re_password:
-
                     # Update the DataBase - enter new client data:
                     self.__data_base.write_data_to_file(login, password)
 
@@ -224,7 +221,7 @@ class Interface:
         # Initializing registration window:
         self.__registration_window = tk.Tk()
         self.__registration_window.title("Registration")
-        #self.__registration_window.config(bg="#90DEF0")
+        # self.__registration_window.config(bg="#90DEF0")
 
         # Setting fixed window position:
         self.__registration_window.geometry("+850+350")
@@ -234,15 +231,22 @@ class Interface:
 
         # Labels:
         label1 = tk.Label(self.__registration_window, text="Login:", font="Calibri 13 bold")
-        label1_1 = tk.Label(self.__registration_window, font='Calibri 10 underline', text="* should have between 4 and 12 characters,")
-        label1_2 = tk.Label(self.__registration_window, font='Calibri 10 underline', text="* begin with letters after which you can have digits or special signs.")
+        label1_1 = tk.Label(self.__registration_window, font='Calibri 10 underline',
+                            text="* should have between 4 and 12 characters,")
+        label1_2 = tk.Label(self.__registration_window, font='Calibri 10 underline',
+                            text="* begin with letters after which you can have digits or special signs.")
         label2 = tk.Label(self.__registration_window, text="Password:", font="Calibri 13 bold")
-        label2_1 = tk.Label(self.__registration_window, font='Calibri 10 underline', text="* should have between 8 and 16 characters,")
-        label2_2 = tk.Label(self.__registration_window, font='Calibri 10 underline', text="* have at least 1: letter, capital letter, number, special sign.")
+        label2_1 = tk.Label(self.__registration_window, font='Calibri 10 underline',
+                            text="* should have between 8 and 16 characters,")
+        label2_2 = tk.Label(self.__registration_window, font='Calibri 10 underline',
+                            text="* have at least 1: letter, capital letter, number, special sign.")
         label3 = tk.Label(self.__registration_window, text="Enter your password again", font="Calibri 13 bold")
-        label4 = tk.Label(self.__registration_window, text="When enter pressed on login or password fields:", font="Calibri 11 bold")
-        label5 = tk.Label(self.__registration_window, text="- this color means that your login/password is correct!", font="Calibri 10", bg="#43D452")
-        label6 = tk.Label(self.__registration_window, text="- this color means that your login/password is incorrect!", font="Calibri 10", bg="#F74E3A")
+        label4 = tk.Label(self.__registration_window, text="When enter pressed on login or password fields:",
+                          font="Calibri 11 bold")
+        label5 = tk.Label(self.__registration_window, text="- this color means that your login/password is correct!",
+                          font="Calibri 10", bg="#43D452")
+        label6 = tk.Label(self.__registration_window, text="- this color means that your login/password is incorrect!",
+                          font="Calibri 10", bg="#F74E3A")
 
         # Entry fields to enter login and password and email:
         entry_login = tk.Entry(self.__registration_window, width=30, font="Calibri 11")
@@ -255,7 +259,8 @@ class Interface:
         entry_re_password.bind("<Return>", on_enter_pressed_re_password)
 
         # Buttons:
-        confirm_button = tk.Button(self.__registration_window, text="Confirm", font="Calibri 10", command=create_an_account)
+        confirm_button = tk.Button(self.__registration_window, text="Confirm", font="Calibri 10",
+                                   command=create_an_account)
         return_button = tk.Button(self.__registration_window, text="Return to log-in", font="Calibri 10",
                                   command=lambda return_button_id=1: self.__return_to_log_in(return_button_id))
 
@@ -304,9 +309,9 @@ class Interface:
         entry_re_password.grid(row=9, column=0, pady=pady)
         uncover_re_password_button.grid(row=9, column=0, padx=padx, sticky="e")
 
-        label4.grid(row=10, column=0, pady=pady*0.5)
+        label4.grid(row=10, column=0, pady=pady * 0.5)
 
-        label5.grid(row=11, column=0, pady=pady*0.5)
+        label5.grid(row=11, column=0, pady=pady * 0.5)
 
         label6.grid(row=12, column=0)
 
@@ -315,6 +320,45 @@ class Interface:
         return_button.grid(row=14, column=0)
 
         leave_button.grid(row=15, column=0, padx=padx, pady=pady, sticky='e')
+
+    # Main application window:
+    def __account_management_window(self) -> None:
+        # Destroying transition window:
+        self.__transition_window.destroy()
+        self.__transition_window = None
+
+        # Initializing account management window:
+        self.__account_window = tk.Tk()
+        self.__account_window.title("Account management")
+
+        # Setting fixed window position:
+        self.__account_window.geometry("+920+400")
+
+        # Toggling red cross in the top right corner to terminating the app:
+        self.__account_window.protocol("WM_DELETE_WINDOW", self.__close_all_cross)
+
+        label1 = tk.Label(self.__account_window, text="Balance on your account:", font="Calibri 14")
+        label2 = tk.Label(self.__account_window, text=f"{self.__account.get_balance()} USD", font="Calibri 12 bold")
+
+        label1.grid(row=0, column=0, columnspan=4)
+        label2.grid(row=1, column=0, columnspan=4)
+
+    # Simple transition window:
+    def __transition_to_account_management_window(self) -> None:
+        # Withdrawing login - main_window:
+        self.__login_window.withdraw()
+
+        # Initializing transition:
+        self.__transition_window = tk.Tk()
+        self.__transition_window.title("Please wait...")
+
+        # Setting fixed window position:
+        self.__transition_window.geometry("250x40+900+400")
+
+        label = tk.Label(self.__transition_window, text="Logging in...", font="Calibri 20 bold")
+        label.pack(pady=5, padx=5, fill="both")
+
+        self.__transition_window.after(2000, self.__account_management_window)
 
     # Window popping after wrong login data have been confirmed:
     def __incorrect_login(self) -> None:
@@ -331,16 +375,17 @@ class Interface:
         # TO ADD:
         # CLEARING ENTRIES
 
-
         # Initializing buttons:
         close_button = tk.Button(self.__info_window, text="Try to log-in again.", font="Calibri 10",
                                  command=lambda return_button_id=2: self.__return_to_log_in(return_button_id))
-        register_button = tk.Button(self.__info_window, text="Don't have an account yet? Sign in!", font="Calibri 10 underline",
+        register_button = tk.Button(self.__info_window, text="Don't have an account yet? Sign in!",
+                                    font="Calibri 10 underline",
                                     command=lambda return_button_id=2: self.__return_to_register(return_button_id))
 
         close_button.bind("<Enter>", lambda event, close_button_id=7: self.__on_hover(event, close_button_id))
         close_button.bind("<Leave>", self.__on_hover_leave)
-        register_button.bind("<Enter>", lambda event, registration_button_id=8: self.__on_hover(event, registration_button_id))
+        register_button.bind("<Enter>",
+                             lambda event, registration_button_id=8: self.__on_hover(event, registration_button_id))
         register_button.bind("<Leave>", self.__on_hover_leave)
 
         # Packing
@@ -354,8 +399,11 @@ class Interface:
 
         self.__notification_window.title("Notification")
 
-        label = tk.Label(self.__notification_window, text="You entered a login which is already used. Think about another one!", font="Calibri 12 bold")
-        button = tk.Button(self.__notification_window, text="Ok", font="Calibri 10", command=self.__notification_window.destroy)
+        label = tk.Label(self.__notification_window,
+                         text="You entered a login which is already used. Think about another one!",
+                         font="Calibri 12 bold")
+        button = tk.Button(self.__notification_window, text="Ok", font="Calibri 10",
+                           command=self.__notification_window.destroy)
 
         button.bind("<Enter>", lambda event, button_id=4: self.__on_hover(event, button_id))
         button.bind("<Leave>", self.__on_hover_leave)
@@ -366,7 +414,7 @@ class Interface:
     # Wrong data during registration process:
     def __failed_registration(self) -> None:
         self.__failed_registration_window = tk.Tk()
-        self.__failed_registration_window .geometry("+820+550")
+        self.__failed_registration_window.geometry("+820+550")
 
         self.__failed_registration_window.title("Registration failed!")
 
@@ -396,21 +444,13 @@ class Interface:
         button = tk.Button(self.__registration_successful_window, text="Move to login window.", font="Calibri 12 bold",
                            command=lambda return_button_id=3: self.__return_to_log_in(return_button_id))
 
-        #button.bind("<Enter>", lambda event, button_id=4: self.__on_hover(event, button_id))
-        #button.bind("<Leave>", self.__on_hover_leave)
+        # button.bind("<Enter>", lambda event, button_id=4: self.__on_hover(event, button_id))
+        # button.bind("<Leave>", self.__on_hover_leave)
 
         label.pack(pady=5, padx=5, fill='both')
         button.pack(pady=5, padx=5, fill='both')
 
-    # Main application window:
-    def __account_management_window(self) -> None:
-        pass
-
-    # Getting user login - for test:
-    def get_user_login(self) -> str:
-        return self.__user.get_login()
-
-    # Returning to login window:
+    # Returning to log in window:
     def __return_to_log_in(self, return_button_id: int) -> None:
         # Return to log-in from registration:
         if return_button_id == 1:
@@ -428,6 +468,7 @@ class Interface:
         # Re-withdrawing log-in window:
         self.__login_window.deiconify()
 
+    # Returning to registration window:
     def __return_to_register(self, return_button_id: int) -> None:
         # Returning from log-in window:
         if return_button_id == 1:
@@ -448,7 +489,8 @@ class Interface:
 
     # Closing the app with the use of a red cross:
     def __close_all_cross(self) -> None:
-        self.__login_window.quit()
+        if self.__login_window:
+            self.__login_window.quit()
 
     # Activating program:
     def activate(self) -> None:
