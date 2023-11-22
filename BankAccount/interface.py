@@ -23,12 +23,12 @@ class Interface:
     def __check_viability_login(self, login: str) -> bool:
         # Beginning with letters and only then can have digits:
         conditions_to_meet = re.compile(r'^[a-zA-Z]+\d*$')
-        return 4 < len(login) < 10 and bool(conditions_to_meet.match(login))
+        return 4 < len(login) < 12 and bool(conditions_to_meet.match(login))
 
     # Helper checking password viability:
     def __check_viability_password(self, password: str) -> bool:
         # At least one digit, letter, capital letter, special sign:
-        conditions_to_meet = re.compile(r'^(?=.*\d)(?=.*[a-zA-Z])(?=.*[A-Z])(?=.*[!@#$%^&*]).*$')
+        conditions_to_meet = re.compile(r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).*$')
         return 8 < len(password) < 16 and bool(conditions_to_meet.match(password))
 
     # Functions handling buttons hovering:
@@ -111,8 +111,8 @@ class Interface:
         label3 = tk.Label(self.__log_in_window, text="Don't have an account yet?", font="Calibri 10 underline")
 
         # Entry fields to enter login and password:
-        entry_login = tk.Entry(self.__log_in_window, width=35)
-        entry_password = tk.Entry(self.__log_in_window, show="*", width=35)
+        entry_login = tk.Entry(self.__log_in_window, width=35, font="Calibri 11")
+        entry_password = tk.Entry(self.__log_in_window, show="*", width=35, font="Calibri 11")
 
         # Buttons for: registration, data confirmation and closing the window:
         registration_button = tk.Button(self.__log_in_window, text="Click here to register",
@@ -159,21 +159,23 @@ class Interface:
             login = entry_login.get()
             password = entry_password.get()
             re_password = entry_re_password.get()
+
             # Handle situation in which somebody tries to create and account that exists - login exists:
+            if self.__data_base.check_login_in_file(login):
+                print("Mamy go")
+            else:
+                # Check viability:
+                if self.__check_viability_login(login) and self.__check_viability_password(password) \
+                        and self.__check_viability_password(re_password):
 
+                    # Check password identity:
+                    if password == re_password:
 
-            # Check viability:
-            if self.__check_viability_login(login) and self.__check_viability_password(password) \
-                    and self.__check_viability_password(re_password):
+                        # Update the DataBase - enter new client data:
+                        self.__data_base.write_data_to_file(login, password)
 
-                # Check password identity:
-                if password == re_password:
-
-                    # Update the DataBase - enter new client data:
-                    self.__data_base.write_data_to_file(login, password)
-
-                    # Go through transition window:
-                    self.__transition_window_account_created()
+                        # Go through transition window:
+                        self.__transition_window_account_created()
 
         # Initializing registration window:
         self.__register_window = tk.Tk()
@@ -190,17 +192,21 @@ class Interface:
         pady = 5
 
         # Labels:
-        label1 = tk.Label(self.__register_window, text="Login", font="Calibri 12")
-        label2 = tk.Label(self.__register_window, text="Password", font="Calibri 12")
+        label1 = tk.Label(self.__register_window, text="Login:", font="Calibri 12")
+        label1_1 = tk.Label(self.__register_window,font='Calibri 9 underline', text="should have between 4 and 12 characters "
+                                                                                   "and begin \nwith letters after which you can have digits or special signs.")
+        label2 = tk.Label(self.__register_window, text="Password:", font="Calibri 12")
+        label2_2 = tk.Label(self.__register_window, font='Calibri 9 underline', text="should have between 8 and 16 characters "
+                                                                                     "and have \nat least 1: letter, capital letter, number, special sign")
         label3 = tk.Label(self.__register_window, text="Enter your password again", font="Calibri 12")
-        label4 = tk.Label(self.__register_window, text="On enter press:", font="Calibri 10 bold")
+        label4 = tk.Label(self.__register_window, text="When enter pressed on login or password fields:", font="Calibri 10 bold")
         label5 = tk.Label(self.__register_window, text="- this color means that your login/password is correct!", font="Calibri 10", bg="#43D452")
         label6 = tk.Label(self.__register_window, text="- this color means that your login/password is incorrect!", font="Calibri 10", bg="#F74E3A")
 
         # Entry fields to enter login and password and email:
-        entry_login = tk.Entry(self.__register_window, width=30)
-        entry_password = tk.Entry(self.__register_window, show="*", width=30)
-        entry_re_password = tk.Entry(self.__register_window, show="*", width=30)
+        entry_login = tk.Entry(self.__register_window, width=30, font="Calibri 11")
+        entry_password = tk.Entry(self.__register_window, show="*", width=30, font="Calibri 11")
+        entry_re_password = tk.Entry(self.__register_window, show="*", width=30, font="Calibri 11")
 
         # Binding fields on enter trigger:
         entry_login.bind("<Return>", self.__on_enter_pressed_login)
@@ -211,6 +217,8 @@ class Interface:
         confirm_button = tk.Button(self.__register_window, text="Confirm", font="Calibri 10", command=create_an_account)
         return_button = tk.Button(self.__register_window, text="Return to log-in", font="Calibri 10",
                                   command=lambda return_button_id=1: self.__return_to_log_in(return_button_id))
+        #uncover_login_button = tk.Button(self.__register_window, text="Uncover", font="Calibri 10")
+        #uncover_password_button = tk.Button(self.__register_window, text="Uncover", font="Calibri 10")
 
         # On hover:
         confirm_button.bind("<Enter>", lambda event, button_id=4: self.__on_hover(event, button_id))
@@ -221,8 +229,10 @@ class Interface:
 
         # Packing:
         label1.pack()
+        label1_1.pack(padx=padx * 0.2)
         entry_login.pack(pady=2 * pady, padx=padx)
         label2.pack()
+        label2_2.pack()
         entry_password.pack(pady=2 * pady, padx=padx)
         label3.pack()
         entry_re_password.pack(pady=2 * pady, padx=padx)
