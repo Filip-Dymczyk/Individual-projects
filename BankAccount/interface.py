@@ -205,21 +205,21 @@ class Interface:
                     # Update the DataBase - enter new client data:
                     self.__data_base.write_data_to_file(login, password)
 
-                    # Clearing all entries:
-                    entry_login.delete(0, 'end')
-                    entry_password.delete(0, 'end')
-                    entry_re_password.delete(0, 'end')
-
-                    # Setting bg to white:
-                    entry_login.configure(bg="white")
-                    entry_password.configure(bg="white")
-                    entry_re_password.configure(bg="white")
-
                     # Go through transition window - registration was successful:
                     self.__registration_successful()
             # Wrong login attempt:
             else:
                 self.__failed_registration()
+
+            # Clearing all entries:
+            entry_login.delete(0, 'end')
+            entry_password.delete(0, 'end')
+            entry_re_password.delete(0, 'end')
+
+            # Setting bg to white:
+            entry_login.configure(bg="white")
+            entry_password.configure(bg="white")
+            entry_re_password.configure(bg="white")
 
         # Initializing registration window:
         self.__registration_window = tk.Tk()
@@ -328,6 +328,9 @@ class Interface:
         self.__info_window.protocol("WM_DELETE_WINDOW", self.__close_all_cross)
         self.__info_window.geometry("350x80+850+450")
 
+        # TO ADD:
+        # CLEARING ENTRIES
+
 
         # Initializing buttons:
         close_button = tk.Button(self.__info_window, text="Try to log-in again.", font="Calibri 10",
@@ -387,7 +390,7 @@ class Interface:
         self.__registration_successful_window.title("Registration succesful!")
 
         label = tk.Label(self.__registration_successful_window,
-                         text="Your registration was succesful! You can now login into your account.",
+                         text="Your registration was succesful! You can now log into your account.",
                          font="Calibri 12 bold",
                          fg="#09D409")
         button = tk.Button(self.__registration_successful_window, text="Move to login window.", font="Calibri 12 bold",
