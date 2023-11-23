@@ -1,34 +1,14 @@
 from typing import Optional
 
 
-# Class representing user data who is currently using the program: login, password and an account:
-class User:
-    def __init__(self) -> None:
-        self.__login: Optional[str] = None
-        self.__password: Optional[str] = None
-        self.account: Account = Account()
-
-    def set_login(self, login: str) -> None:
-        self.__login = login
-
-    def set_password(self, password: str) -> None:
-        self.__password = password
-
-    def get_login(self) -> str:
-        return self.__login
-
-    def get_password(self) -> str:
-        return self.__password
-
-
 # Class representing a database, probably file reader and writer at first; in later versions maybe a regular database:
 class DataBase:
     def __init__(self) -> None:
 
-        # Keeping track of information that may be used to speed-up later processes of the application like:
-        # number of line in which we have data related to the user that is currently logged and his account balance.
-        self.line_nr: Optional[int] = None
+        # Keeping track of information that may be used to speed-up later processes of the application:
         self.__account_balance: Optional[float] = None
+        self.__current_login: Optional[str] = None
+        self.__current_password: Optional[str] = None
 
         # Getting appropriate file path:
         file_path = __file__
@@ -66,9 +46,6 @@ class DataBase:
                         # Third element is balance which we save:
                         self.__account_balance = float(line_split[2])
 
-                        # We also get the line nr in which we have useful information:
-                        self.line_nr = i
-
                         return password_from_file == password
         return False
 
@@ -79,27 +56,46 @@ class DataBase:
             line = f"{login} {password} {0}\n"
             file.write(line)
 
-            # It's now the last line - newly added:
-            self.line_nr = len(file.readlines()) - 1
+    # Updating balance after terminating account management window:
+    def update_balance(self, balance: float) -> None:
+        # Removing the old line from file:
+        with open(self.__file_path, "r+") as file:
+            new_f = file.readlines()
+            file.seek(0)
+            for line in new_f:
+                if self.__current_login not in line:
+                    file.write(line)
+            file.truncate()
+        # Writing updated line to file:
+        with open(self.__file_path, "a") as file:
+            new_line = f"{self.__current_login} {self.__current_password} {balance}\n"
+            file.write(new_line)
 
-        # Balance = 0:
-        self.__account_balance = 0
+    # Setting login and password of user that is currently logged in:
+    def set_curr_login(self, login: str) -> None:
+        self.__current_login = login
 
-    # Getting balance related to particular User:
-    def get_balance(self) -> float:
+    def set_curr_password(self, password: str) -> None:
+        self.__current_password = password
+
+    # Returning balance related to logged user:
+    def get_account_balance(self) -> float:
         return self.__account_balance
 
-    # Setting balance:
-    def set_balance(self, balance: float) -> None:
-        self.__account_balance = balance
 
-    # Updating balance:
-    def update_balance(self, login: str, password: str) -> None:
-        pass
-
-
-# Class representing account details:
+# Class representing account details and allowing for operations:
 class Account:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, balance: float = 0) -> None:
+        self.__balance = balance
 
+    def get_balance(self) -> float:
+        return self.__balance
+
+    def set_balance(self, balance: float) -> None:
+        self.__balance = balance
+
+    def withdraw(self, amount: float) -> None:
+        self.__balance -= abs(amount)
+
+    def deposit(self, amount: float) -> None:
+        self.__balance += abs(amount)
