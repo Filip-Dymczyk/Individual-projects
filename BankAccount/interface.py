@@ -92,13 +92,22 @@ class Interface:
 
             # If login and password are in database related to each-other then the login is successful:
             if self.__data_base.check_login_password(login, password):
-                # Add: getting account balance for data_base and setting users Account with it:
+                # Remember login and password of user currently logged in:
+                self.__data_base.set_curr_login(login)
+                self.__data_base.set_curr_password(password)
+
+                # Setting account balance with user's balance read from db:
+                self.__account.set_balance(self.__data_base.get_account_balance())
 
                 # Move to another window - transition:
                 self.__transition_to_account_management_window()
             else:
                 # Pop another window:
                 self.__incorrect_login()
+
+                # Clear entries in log-in:
+                entry_login.delete(0, 'end')
+                entry_password.delete(0, 'end')
 
         # Initializing log_in window:
         self.__login_window = tk.Tk()
@@ -193,20 +202,24 @@ class Interface:
             password = entry_password.get()
             re_password = entry_re_password.get()
 
-            # Check viability:
-            if self.__check_viability_login(login) and self.__check_viability_password(password) \
-                    and self.__check_viability_password(re_password):
-
-                # Check password identity:
-                if password == re_password:
-                    # Update the DataBase - enter new client data:
-                    self.__data_base.write_data_to_file(login, password)
-
-                    # Go through transition window - registration was successful:
-                    self.__registration_successful()
-            # Wrong login attempt:
+            # Check if login in db:
+            if self.__data_base.check_login_in_file(login):
+                self.__login_in_db()
             else:
-                self.__failed_registration()
+                # Check viability:
+                if self.__check_viability_login(login) and self.__check_viability_password(password) \
+                        and self.__check_viability_password(re_password):
+
+                    # Check password identity:
+                    if password == re_password:
+                        # Update the DataBase - enter new client data:
+                        self.__data_base.write_data_to_file(login, password)
+
+                        # Go through transition window - registration was successful:
+                        self.__registration_successful()
+                # Wrong login attempt:
+                else:
+                    self.__failed_registration()
 
             # Clearing all entries:
             entry_login.delete(0, 'end')
@@ -323,25 +336,75 @@ class Interface:
 
     # Main application window:
     def __account_management_window(self) -> None:
+
+        # Changing account balance on click:
+        def change_account_balance(button_id: int) -> None:
+            try:
+                # Deposit:
+                if button_id == 1:
+                    deposit = float(entry_deposit.get())
+                    self.__account.deposit(deposit)
+                # Withdrawal:
+                elif button_id == 2:
+                    withdrawal = float(entry_withdraw.get())
+                    self.__account.withdraw(withdrawal)
+
+                # Reloading the window:
+                self.__account_management_window()
+            except ValueError:
+                entry_withdraw.delete(0, 'end')
+                entry_deposit.delete(0, 'end')
+
         # Destroying transition window:
-        self.__transition_window.destroy()
-        self.__transition_window = None
+        if self.__transition_window:
+            self.__transition_window.destroy()
+            self.__transition_window = None
+        # Destroying account if we are re-loading the page:
+        if self.__account_window:
+            self.__account_window.destroy()
+            self.__account_window = None
 
         # Initializing account management window:
         self.__account_window = tk.Tk()
         self.__account_window.title("Account management")
 
         # Setting fixed window position:
-        self.__account_window.geometry("+920+400")
+        self.__account_window.geometry("+750+400")
 
         # Toggling red cross in the top right corner to terminating the app:
         self.__account_window.protocol("WM_DELETE_WINDOW", self.__close_all_cross)
 
-        label1 = tk.Label(self.__account_window, text="Balance on your account:", font="Calibri 14")
-        label2 = tk.Label(self.__account_window, text=f"{self.__account.get_balance()} USD", font="Calibri 12 bold")
+        # Changing the color of balance label on every reload base on the balance amount:
+        bg = "grey"
+        if self.__account.get_balance() > 0:
+            bg = "green"
+        elif self.__account.get_balance() < 0:
+            bg = "red"
 
-        label1.grid(row=0, column=0, columnspan=4)
-        label2.grid(row=1, column=0, columnspan=4)
+        # Creating labels:
+        label1 = tk.Label(self.__account_window, text="Your account balance:", font="Calibri 16")
+        label2 = tk.Label(self.__account_window, text=f"{self.__account.get_balance()} USD", font="Calibri 14 bold", bg=bg)
+        label3 = tk.Label(self.__account_window, text="Deposit amount:", font="Calibri 14")
+        label4 = tk.Label(self.__account_window, text="Withdraw amount:", font="Calibri 14")
+
+        # Creating entries:
+        entry_deposit = tk.Entry(self.__account_window, font="Calibri 12")
+        entry_withdraw = tk.Entry(self.__account_window, font="Calibri 12")
+
+        # Creating buttons:
+        button_deposit = tk.Button(self.__account_window, text="Confirm operation", font="Calibri 12", command=lambda button_id=1: change_account_balance(button_id))
+        button_withdraw = tk.Button(self.__account_window, text="Confirm operation", font="Calibri 12", command=lambda button_id=2: change_account_balance(button_id))
+
+        label1.grid(row=0, column=1)
+        label2.grid(row=1, column=1)
+
+        label3.grid(row=2, column=0, padx=10, pady=5)
+        entry_deposit.grid(row=3, column=0, padx=5)
+        button_deposit.grid(row=4, column=0, padx=5, pady=10)
+
+        label4.grid(row=2, column=2, padx=10, pady=5)
+        entry_withdraw.grid(row=3, column=2, padx=5)
+        button_withdraw.grid(row=4, column=2, padx=5, pady=10)
 
     # Simple transition window:
     def __transition_to_account_management_window(self) -> None:
@@ -355,7 +418,7 @@ class Interface:
         # Setting fixed window position:
         self.__transition_window.geometry("250x40+900+400")
 
-        label = tk.Label(self.__transition_window, text="Logging in...", font="Calibri 20 bold")
+        label = tk.Label(self.__transition_window, text="Logging in...", font="Calibri 16 bold")
         label.pack(pady=5, padx=5, fill="both")
 
         self.__transition_window.after(2000, self.__account_management_window)
@@ -371,9 +434,6 @@ class Interface:
         self.__info_window.title("Incorrect login or password!")
         self.__info_window.protocol("WM_DELETE_WINDOW", self.__close_all_cross)
         self.__info_window.geometry("350x80+850+450")
-
-        # TO ADD:
-        # CLEARING ENTRIES
 
         # Initializing buttons:
         close_button = tk.Button(self.__info_window, text="Try to log-in again.", font="Calibri 10",
@@ -444,9 +504,6 @@ class Interface:
         button = tk.Button(self.__registration_successful_window, text="Move to login window.", font="Calibri 12 bold",
                            command=lambda return_button_id=3: self.__return_to_log_in(return_button_id))
 
-        # button.bind("<Enter>", lambda event, button_id=4: self.__on_hover(event, button_id))
-        # button.bind("<Leave>", self.__on_hover_leave)
-
         label.pack(pady=5, padx=5, fill='both')
         button.pack(pady=5, padx=5, fill='both')
 
@@ -489,8 +546,12 @@ class Interface:
 
     # Closing the app with the use of a red cross:
     def __close_all_cross(self) -> None:
+        # Terminating the app:
         if self.__login_window:
             self.__login_window.quit()
+
+        # Saving user's balance:
+        self.__data_base.update_balance(self.__account.get_balance())
 
     # Activating program:
     def activate(self) -> None:
