@@ -105,9 +105,9 @@ class Interface:
                 # Pop another window:
                 self.__incorrect_login()
 
-                # Clear entries in log-in:
-                entry_login.delete(0, 'end')
-                entry_password.delete(0, 'end')
+            # Clear entries in log-in:
+            entry_login.delete(0, 'end')
+            entry_password.delete(0, 'end')
 
         # Initializing log_in window:
         self.__login_window = tk.Tk()
@@ -202,14 +202,11 @@ class Interface:
             password = entry_password.get()
             re_password = entry_re_password.get()
 
-            # Check if login in db:
-            if self.__data_base.check_login_in_file(login):
-                self.__login_in_db()
-            else:
-                # Check viability:
-                if self.__check_viability_login(login) and self.__check_viability_password(password) \
-                        and self.__check_viability_password(re_password):
-
+            if self.__check_viability_login(login) and self.__check_viability_password(password) \
+                    and self.__check_viability_password(re_password):
+                if self.__data_base.check_login_in_file(login):
+                    self.__login_in_db()
+                else:
                     # Check password identity:
                     if password == re_password:
                         # Update the DataBase - enter new client data:
@@ -217,8 +214,9 @@ class Interface:
 
                         # Go through transition window - registration was successful:
                         self.__registration_successful()
-                # Wrong login attempt:
-                else:
+            # Wrong login attempt:
+            else:
+                if self.__failed_registration_window is None:
                     self.__failed_registration()
 
             # Clearing all entries:
@@ -247,7 +245,7 @@ class Interface:
         label1_1 = tk.Label(self.__registration_window, font='Calibri 10 underline',
                             text="* should have between 4 and 12 characters,")
         label1_2 = tk.Label(self.__registration_window, font='Calibri 10 underline',
-                            text="* begin with letters after which you can have digits or special signs.")
+                            text="* begin with letters after which you can have digits.")
         label2 = tk.Label(self.__registration_window, text="Password:", font="Calibri 13 bold")
         label2_1 = tk.Label(self.__registration_window, font='Calibri 10 underline',
                             text="* should have between 8 and 16 characters,")
@@ -337,6 +335,14 @@ class Interface:
     # Main application window:
     def __account_management_window(self) -> None:
 
+        def get_bg(balance: float) -> str:
+            bg = "grey"
+            if balance > 0:
+                bg = "green"
+            elif balance < 0:
+                bg = "red"
+            return bg
+
         # Changing account balance on click:
         def change_account_balance(button_id: int) -> None:
             try:
@@ -344,13 +350,18 @@ class Interface:
                 if button_id == 1:
                     deposit = float(entry_deposit.get())
                     self.__account.deposit(deposit)
+                    entry_deposit.delete(0, 'end')
                 # Withdrawal:
                 elif button_id == 2:
                     withdrawal = float(entry_withdraw.get())
                     self.__account.withdraw(withdrawal)
+                    entry_withdraw.delete(0, 'end')
+
+                # Changing the color of balance:
+                bg = get_bg(self.__account.get_balance())
 
                 # Reloading the window:
-                self.__account_management_window()
+                label2.configure(text=f"{self.__account.get_balance()} USD", bg=bg)
             except ValueError:
                 entry_withdraw.delete(0, 'end')
                 entry_deposit.delete(0, 'end')
@@ -375,11 +386,7 @@ class Interface:
         self.__account_window.protocol("WM_DELETE_WINDOW", self.__close_all_cross)
 
         # Changing the color of balance label on every reload base on the balance amount:
-        bg = "grey"
-        if self.__account.get_balance() > 0:
-            bg = "green"
-        elif self.__account.get_balance() < 0:
-            bg = "red"
+        bg = get_bg(self.__account.get_balance())
 
         # Creating labels:
         label1 = tk.Label(self.__account_window, text="Your account balance:", font="Calibri 16")
@@ -392,8 +399,24 @@ class Interface:
         entry_withdraw = tk.Entry(self.__account_window, font="Calibri 12")
 
         # Creating buttons:
-        button_deposit = tk.Button(self.__account_window, text="Confirm operation", font="Calibri 12", command=lambda button_id=1: change_account_balance(button_id))
-        button_withdraw = tk.Button(self.__account_window, text="Confirm operation", font="Calibri 12", command=lambda button_id=2: change_account_balance(button_id))
+        button_deposit = tk.Button(self.__account_window, text="Confirm operation", font="Calibri 12",
+                                   command=lambda button_id=1: change_account_balance(button_id))
+        button_withdraw = tk.Button(self.__account_window, text="Confirm operation", font="Calibri 12",
+                                    command=lambda button_id=2: change_account_balance(button_id))
+        button_leave = tk.Button(self.__account_window, text="Leave", font="Calibri 12",
+                                 command=lambda leave_button_id=1: self.__terminate(leave_button_id))
+        button_return = tk.Button(self.__account_window, text="Return to log-in",
+                                  command=lambda return_button_id=4: self.__return_to_log_in(return_button_id))
+
+        # Hovering:
+        button_deposit.bind("<Enter>", lambda event, button_id=1: self.__on_hover(event, button_id))
+        button_withdraw.bind("<Enter>", lambda event, button_id=1: self.__on_hover(event, button_id))
+        button_leave.bind("<Enter>", lambda event, button_id=3: self.__on_hover(event, button_id))
+        button_return.bind("<Enter>", lambda event, button_id=5: self.__on_hover(event, button_id))
+        button_deposit.bind("<Leave>", self.__on_hover_leave)
+        button_withdraw.bind("<Leave>", self.__on_hover_leave)
+        button_leave.bind("<Leave>", self.__on_hover_leave)
+        button_return.bind("<Leave>", self.__on_hover_leave)
 
         label1.grid(row=0, column=1)
         label2.grid(row=1, column=1)
@@ -406,6 +429,9 @@ class Interface:
         entry_withdraw.grid(row=3, column=2, padx=5)
         button_withdraw.grid(row=4, column=2, padx=5, pady=10)
 
+        button_return.grid(row=6, column=0, sticky="w", padx=5, pady=5)
+        button_leave.grid(row=6, column=2, sticky="e", padx=5, pady=5)
+
     # Simple transition window:
     def __transition_to_account_management_window(self) -> None:
         # Withdrawing login - main_window:
@@ -416,9 +442,9 @@ class Interface:
         self.__transition_window.title("Please wait...")
 
         # Setting fixed window position:
-        self.__transition_window.geometry("250x40+900+400")
+        self.__transition_window.geometry("250x50+900+400")
 
-        label = tk.Label(self.__transition_window, text="Logging in...", font="Calibri 16 bold")
+        label = tk.Label(self.__transition_window, text="Logging in...", font="Calibri 24 bold")
         label.pack(pady=5, padx=5, fill="both")
 
         self.__transition_window.after(2000, self.__account_management_window)
@@ -473,6 +499,11 @@ class Interface:
 
     # Wrong data during registration process:
     def __failed_registration(self) -> None:
+        # Blocking multiple failure windows opening:
+        def destroy_failed_registration_window() -> None:
+            self.__failed_registration_window.destroy()
+            self.__failed_registration_window = None
+
         self.__failed_registration_window = tk.Tk()
         self.__failed_registration_window.geometry("+820+550")
 
@@ -482,7 +513,7 @@ class Interface:
                          text="You entered wrong registration data! Try again with new ones.",
                          font="Calibri 12 bold")
         button = tk.Button(self.__failed_registration_window, text="Ok", font="Calibri 10",
-                           command=self.__failed_registration_window.destroy)
+                           command=destroy_failed_registration_window)
 
         button.bind("<Enter>", lambda event, button_id=4: self.__on_hover(event, button_id))
         button.bind("<Leave>", self.__on_hover_leave)
@@ -517,11 +548,17 @@ class Interface:
         elif return_button_id == 2:
             self.__info_window.destroy()
             self.__info_window = None
+        # Return to log-in from registration (successful):
         elif return_button_id == 3:
             self.__registration_successful_window.destroy()
             self.__registration_successful_window = None
             self.__registration_window.destroy()
             self.__registration_window = None
+        # Return to log-in account management:
+        elif return_button_id == 4:
+            self.__account_window.destroy()
+            self.__account_window = None
+            self.__data_base.update_balance(self.__account.get_balance())
         # Re-withdrawing log-in window:
         self.__login_window.deiconify()
 
@@ -537,11 +574,14 @@ class Interface:
 
     # Terminating the whole program:
     def __terminate(self, close_button_nr: int) -> None:
-        # Close button from log_in:
+        # Close button from log_in or account management:
         if close_button_nr == 1:
             if self.__registration_window is not None:
                 self.__registration_window.destroy()
                 self.__registration_window = None
+            elif self.__account_window is not None:
+                self.__account_window.destroy()
+                self.__account_window = None
             self.__login_window.quit()
 
     # Closing the app with the use of a red cross:
@@ -550,8 +590,9 @@ class Interface:
         if self.__login_window:
             self.__login_window.quit()
 
-        # Saving user's balance:
-        self.__data_base.update_balance(self.__account.get_balance())
+        # Saving user's balance only when there is a need to:
+        if self.__account.get_balance() != 0:
+            self.__data_base.update_balance(self.__account.get_balance())
 
     # Activating program:
     def activate(self) -> None:
