@@ -1,5 +1,10 @@
 from interface import Interface
 
-if __name__ == "__main__":
+
+def main():
     interface = Interface()
     interface.activate()
+
+
+if __name__ == "__main__":
+    main()
