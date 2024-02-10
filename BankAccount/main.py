@@ -1,5 +1,10 @@
-from bank_account import Interface
+from interface import Interface
 
-interface = Interface()
-interface.activate()
-print(interface.get_user_login())
+
+def main():
+    interface = Interface()
+    interface.activate()
+
+
+if __name__ == "__main__":
+    main()
