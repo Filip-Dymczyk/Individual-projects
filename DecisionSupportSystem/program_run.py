@@ -1015,13 +1015,13 @@ class ResultsShowWindow(QWidget):
     # Moving to result back-up window:
     def __backup_calc_window(self) -> None:
         self.backup_calc_window = BackupCalcWindow(self.__method, self.alg_obj, self.__parent)
-        self.destroy()
+        self.close()
         self.backup_calc_window.show()
 
     # Results display:
     def __ranking_show(self) -> None:
         self.__ranking_show_window = RankingShow(self.__method, self.alg_obj, self.__parent)
-        self.destroy()
+        self.close()
         self.__ranking_show_window.show()
 
 
@@ -1174,7 +1174,7 @@ class BackupCalcWindow(QWidget):
     # Moving to ranking window:
     def __ranking_show(self) -> None:
         self.__ranking_show_window = RankingShow(self.__method, self.alg_obj, self.__parent)
-        self.destroy()
+        self.close()
         self.__ranking_show_window.show()
 
 
